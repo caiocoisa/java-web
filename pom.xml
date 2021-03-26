@@ -5,8 +5,121 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>war</packaging>
   
-   <properties>
-        <failOnMissingWebXml>false</failOnMissingWebXml>
-        <!-- outras properties -->
-   </properties>
+  	<name>Configurar Servidor de Aplicação</name>
+	<description>Este projeto tem como objetivo servir de ponto de partida para a configuração inicial do servidor de aplicação.</description>
+
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<wildfly.install.dir>${project.build.directory}\wildfly</wildfly.install.dir>
+		<wildfly.version>18.0.1.Final</wildfly.version>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- https://mvnrepository.com/artifact/org.wildfly/wildfly-dist -->
+			<dependency>
+				<groupId>org.wildfly</groupId>
+				<artifactId>wildfly-dist</artifactId>
+				<version>${wildfly.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<dependency>
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
+			<version>7.0</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<artifactId>maven-war-plugin</artifactId>
+					<version>3.3.1</version>
+				</plugin>
+				<plugin>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<version>3.1.2</version>
+				</plugin>
+				<plugin>
+					<groupId>org.wildfly.plugins</groupId>
+					<artifactId>wildfly-maven-plugin</artifactId>
+					<version>2.1.0.Beta1</version>
+					<configuration>
+						<jboss-home>${wildfly.install.dir}\wildfly-${wildfly.version}</jboss-home>
+						<java-opts>
+							<java-opt>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005</java-opt>
+						</java-opts>
+						<add-user>
+							<users>
+								<user>
+									<username>admin</username>
+									<password>admin</password>
+								</user>
+							</users>
+						</add-user>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<profiles>
+		<profile>
+			<id>Deploy-App</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.wildfly.plugins</groupId>
+						<artifactId>wildfly-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>deploy-app</id>
+								<phase>package</phase>
+								<goals>
+									<goal>deploy</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>Config-Server</id>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-dependency-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>download-server</id>
+								<phase>package</phase>
+								<goals>
+									<goal>unpack</goal>
+								</goals>
+								<configuration>
+									<artifactItems>
+										<artifactItem>
+											<groupId>org.wildfly</groupId>
+											<artifactId>wildfly-dist</artifactId>
+											<type>zip</type>
+											<overWrite>false</overWrite>
+											<outputDirectory>${wildfly.install.dir}</outputDirectory>
+										</artifactItem>
+									</artifactItems>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
